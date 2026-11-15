@@ -4,14 +4,14 @@ const http=require('node:http');
 const fs=require('node:fs');
 const path=require('node:path');
 (async()=>{
- const server=http.createServer((req,res)=>{const pathname=new URL(req.url,'http://localhost').pathname;const allowed={'/':'index.html','/index.html':'index.html','/features.js':'features.js','/advanced.js':'advanced.js'};const file=allowed[pathname];if(!file){res.writeHead(404);res.end('Not found');return}res.setHeader('Content-Type',file.endsWith('.js')?'application/javascript; charset=utf-8':'text/html; charset=utf-8');fs.createReadStream(path.resolve(file)).pipe(res)});
+ const server=http.createServer((req,res)=>{const pathname=new URL(req.url,'http://localhost').pathname;const allowed={'/':'index.html','/index.html':'index.html','/features.js':'features.js','/advanced.js':'advanced.js'};const file=allowed[pathname];if(pathname==='/favicon.ico'){res.writeHead(204);res.end();return}if(!file){res.writeHead(404);res.end('Not found');return}res.setHeader('Content-Type',file.endsWith('.js')?'application/javascript; charset=utf-8':'text/html; charset=utf-8');fs.createReadStream(path.resolve(file)).pipe(res)});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const url='http://127.0.0.1:'+server.address().port+'/';
  const browser=await chromium.launch({headless:true});
  try{
   const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  page.on('console',msg=>{if(msg.type()==='error')errors.push('console: '+msg.text())});
+  page.on('console',msg=>{if(msg.type()==='error'&&!msg.text().includes('favicon'))errors.push('console: '+msg.text())});
   await page.goto(url);
   assert.equal(await page.title(),'Japan Family Trip OS 9 | Family Travel Control');
   await page.locator('[data-tab="settings"]').click();
