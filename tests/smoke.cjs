@@ -1,13 +1,17 @@
 const {chromium}=require('playwright');
 const assert=require('node:assert/strict');
-const {pathToFileURL}=require('node:url');
+const http=require('node:http');
+const fs=require('node:fs');
 const path=require('node:path');
 (async()=>{
+ const server=http.createServer((req,res)=>{const pathname=new URL(req.url,'http://localhost').pathname;const allowed={'/':'index.html','/index.html':'index.html','/features.js':'features.js','/advanced.js':'advanced.js'};const file=allowed[pathname];if(!file){res.writeHead(404);res.end('Not found');return}res.setHeader('Content-Type',file.endsWith('.js')?'application/javascript; charset=utf-8':'text/html; charset=utf-8');fs.createReadStream(path.resolve(file)).pipe(res)});
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ const url='http://127.0.0.1:'+server.address().port+'/';
  const browser=await chromium.launch({headless:true});
  try{
   const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(pathToFileURL(path.resolve('index.html')).href);
+  await page.goto(url);
   await page.locator('[data-tab="settings"]').click();
   await page.locator('#startDate').fill('2026-11-20');
   await page.locator('#people').fill('5');
@@ -39,7 +43,13 @@ const path=require('node:path');
   await page.locator('[data-tab="days"]').click();
   await page.getByText('QA Hotel').waitFor();
   assert.deepEqual(errors,[]);
+  await page.locator('[data-tab="home"]').click();
+  await page.getByRole('heading',{name:'旅行控制中心 7.0'}).waitFor();
+  await page.getByRole('heading',{name:'旅行进阶工具 8.0'}).waitFor();
+  await page.getByRole('button',{name:'时间冲突'}).click();
+  await page.getByRole('heading',{name:'时间冲突扫描'}).waitFor();
+  assert.deepEqual(errors,[]);
   console.log('PASS: mobile viewport, edit hotel, edit settings, save, refresh, download backup, reset and UI restore');
   console.log('NOTE: Chromium mobile emulation, not physical iPhone Safari');
- }finally{await browser.close()}
+ }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(e=>{console.error(e);process.exit(1)});
