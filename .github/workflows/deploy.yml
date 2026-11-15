@@ -25,6 +25,9 @@ jobs:
           grep -qi '<html' index.html
           test -s tests/smoke.cjs
           node --check tests/smoke.cjs
+          node --check features.js
+          node --check advanced.js
+          node -e "const fs=require('fs');const vm=require('vm');const html=fs.readFileSync('index.html','utf8');const m=html.match(/<script>([\\s\\S]*?)<\\/script>/);if(!m)process.exit(1);new vm.Script(m[1]);console.log('Inline script syntax OK')"
       - name: Install browser test runner
         run: npm install --no-save playwright@1.56.1
       - name: Install Chromium
