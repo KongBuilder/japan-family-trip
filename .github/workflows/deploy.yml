@@ -34,6 +34,13 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Mobile acceptance
         run: node tests/smoke.cjs
+      - name: Report failure context
+        if: failure()
+        run: |
+          echo 'Acceptance failed. Review the first failing step and browser exception above.'
+          node --version
+          npm --version
+          git rev-parse HEAD
   deploy:
     needs: acceptance
     runs-on: ubuntu-latest
