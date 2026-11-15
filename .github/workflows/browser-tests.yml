@@ -23,6 +23,7 @@ jobs:
           node --check advanced.js
           node --check dashboard.js
           node --check audit.js
+          node --check timeline.js
       - name: Run mobile browser tests
         run: node tests/smoke.cjs
       - name: Upload browser failure evidence
