@@ -1,4 +1,4 @@
-name: Deploy Japan Family Trip OS
+name: Test and deploy Japan Family Trip OS
 on:
   push:
     branches: [main]
@@ -8,20 +8,37 @@ permissions:
   pages: write
   id-token: write
 concurrency:
-  group: pages
+  group: japan-pages
   cancel-in-progress: true
 jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate source
+        run: |
+          test -s index.html
+          grep -qi '<html' index.html
+          test -s tests/smoke.cjs
+          node --check tests/smoke.cjs
+      - name: Install browser test runner
+        run: npm install --no-save playwright@1.56.1
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Mobile acceptance
+        run: node tests/smoke.cjs
   deploy:
+    needs: acceptance
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate site
-        run: |
-          test -s index.html
-          grep -q '<html' index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
