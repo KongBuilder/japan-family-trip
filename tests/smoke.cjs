@@ -4,7 +4,7 @@ const http=require('node:http');
 const fs=require('node:fs');
 const path=require('node:path');
 (async()=>{
- const server=http.createServer((req,res)=>{const pathname=new URL(req.url,'http://localhost').pathname;const allowed={'/':'index.html','/index.html':'index.html','/features.js':'features.js','/advanced.js':'advanced.js','/dashboard.js':'dashboard.js'};const file=allowed[pathname];if(pathname==='/favicon.ico'){res.writeHead(204);res.end();return}if(!file){res.writeHead(404);res.end('Not found');return}res.setHeader('Content-Type',file.endsWith('.js')?'application/javascript; charset=utf-8':'text/html; charset=utf-8');fs.createReadStream(path.resolve(file)).pipe(res)});
+ const server=http.createServer((req,res)=>{const pathname=new URL(req.url,'http://localhost').pathname;const allowed={'/':'index.html','/index.html':'index.html','/features.js':'features.js','/advanced.js':'advanced.js','/dashboard.js':'dashboard.js','/audit.js':'audit.js'};const file=allowed[pathname];if(pathname==='/favicon.ico'){res.writeHead(204);res.end();return}if(!file){res.writeHead(404);res.end('Not found');return}res.setHeader('Content-Type',file.endsWith('.js')?'application/javascript; charset=utf-8':'text/html; charset=utf-8');fs.createReadStream(path.resolve(file)).pipe(res)});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const url='http://127.0.0.1:'+server.address().port+'/';
  const browser=await chromium.launch({headless:true});
@@ -66,6 +66,8 @@ const path=require('node:path');
   await page.locator('[data-tab="home"]').click();
   await page.getByRole('heading',{name:'今天该处理什么？'}).waitFor();
   await page.getByRole('heading',{name:'需要优先处理'}).waitFor();
+  await page.getByRole('heading',{name:'旅行质量控制中心 11.0'}).waitFor();
+  assert.equal(await page.evaluate(()=>typeof JapanTripAudit.evaluate),'function');
   await page.getByRole('heading',{name:'四城转场检查'}).waitFor();
   await page.getByRole('heading',{name:'旅行控制中心 7.0'}).waitFor();
   await page.getByRole('heading',{name:'旅行进阶工具 8.0'}).waitFor();
