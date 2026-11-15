@@ -8,8 +8,9 @@ const path=require('node:path');
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const url='http://127.0.0.1:'+server.address().port+'/';
  const browser=await chromium.launch({headless:true});
+ let page;
  try{
-  const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true});
+  page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   page.on('console',msg=>{if(msg.type()==='error'&&!msg.text().includes('favicon'))errors.push('console: '+msg.text())});
   await page.goto(url);
@@ -73,5 +74,10 @@ const path=require('node:path');
   console.log('PASS: 1000 deterministic date-offset scenarios');
   console.log('PASS: mobile viewport, edit hotel, edit settings, save, refresh, download backup, reset and UI restore');
   console.log('NOTE: Chromium mobile emulation, not physical iPhone Safari');
+ }catch(e){
+  fs.mkdirSync('test-results',{recursive:true});
+  fs.writeFileSync('test-results/failure.txt',String(e&&e.stack||e));
+  if(page){try{await page.screenshot({path:'test-results/failure.png',fullPage:true,timeout:5000})}catch{}}
+  throw e;
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(e=>{console.error(e);process.exit(1)});
