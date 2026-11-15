@@ -29,6 +29,7 @@ jobs:
           node --check advanced.js
           node --check dashboard.js
           node --check audit.js
+          node --check timeline.js
           node -e "const fs=require('fs');const vm=require('vm');const h=fs.readFileSync('index.html','utf8');const script=h.split('<script>')[1]?.split('</script>')[0];if(!script)process.exit(1);new vm.Script(script);console.log('Inline script syntax OK')"
       - name: Install browser test runner
         run: npm install --no-save playwright@1.56.1
