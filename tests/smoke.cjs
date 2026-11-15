@@ -49,6 +49,9 @@ const path=require('node:path');
   await page.getByRole('button',{name:'时间冲突'}).click();
   await page.getByRole('heading',{name:'时间冲突扫描'}).waitFor();
   assert.deepEqual(errors,[]);
+  const stress=await page.evaluate(()=>{let failed=[];for(let i=0;i<1000;i++){let start='2026-11-20',actual=dateISO(start,i),expected=new Date(Date.UTC(2026,10,20+i)).toISOString().slice(0,10);if(actual!==expected)failed.push({i,actual,expected})}return {cases:1000,failed}});
+  assert.equal(stress.failed.length,0,'Date calculations must pass 1000 day-offset cases');
+  console.log('PASS: 1000 deterministic date-offset scenarios');
   console.log('PASS: mobile viewport, edit hotel, edit settings, save, refresh, download backup, reset and UI restore');
   console.log('NOTE: Chromium mobile emulation, not physical iPhone Safari');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
