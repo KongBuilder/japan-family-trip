@@ -1,0 +1,13 @@
+{
+  "name": "japan-family-trip-os",
+  "version": "9.0.1",
+  "private": true,
+  "description": "Static offline-first family itinerary with browser acceptance tests",
+  "scripts": {
+    "test": "node tests/smoke.cjs",
+    "check": "node --check tests/smoke.cjs && node --check features.js && node --check advanced.js"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}
