@@ -1,0 +1,41 @@
+const { chromium } = require('playwright');
+const assert = require('node:assert/strict');
+const { pathToFileURL } = require('node:url');
+const path = require('node:path');
+(async () => {
+  const browser = await chromium.launch({headless:true});
+  const page = await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+  const errors=[];
+  page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(pathToFileURL(path.resolve('index.html')).href);
+  await page.waitForSelector('#home');
+  const result = await page.evaluate(() => {
+    const key='japan-family-os-v5';
+    const before=JSON.parse(localStorage.getItem(key));
+    assertValid(before);
+    before.people=5;
+    before.days[0].hotel='QA Test Hotel';
+    localStorage.setItem(key,JSON.stringify(before));
+    function assertValid(x){if(!x||x.days?.length!==17)throw Error('Initial itinerary invalid')}
+    return {days:before.days.length,people:before.people};
+  });
+  assert.equal(result.days,17);
+  await page.reload();
+  let restored=await page.evaluate(()=>JSON.parse(localStorage.getItem('japan-family-os-v5')));
+  assert.equal(restored.people,5,'Refresh must retain people');
+  assert.equal(restored.days[0].hotel,'QA Test Hotel','Refresh must retain hotel');
+  const backup=JSON.stringify(restored);
+  await page.evaluate(()=>localStorage.removeItem('japan-family-os-v5'));
+  await page.reload();
+  let reset=await page.evaluate(()=>JSON.parse(localStorage.getItem('japan-family-os-v5')));
+  assert.equal(reset.people,4,'Reset seed must load');
+  await page.evaluate(text=>localStorage.setItem('japan-family-os-v5',text),backup);
+  await page.reload();
+  restored=await page.evaluate(()=>JSON.parse(localStorage.getItem('japan-family-os-v5')));
+  assert.equal(restored.people,5,'JSON restoration must retain people');
+  assert.equal(restored.days[0].hotel,'QA Test Hotel');
+  assert.deepEqual(errors,[],'No JavaScript runtime errors');
+  console.log('PASS: mobile render, 17 days, persistence, refresh, JSON serialization and restore.');
+  console.log('NOT TESTED: native iPhone Safari, real download/import UI, live HTTPS Pages.');
+  await browser.close();
+})().catch(e=>{console.error(e);process.exit(1)});
