@@ -29,7 +29,7 @@ const path=require('node:path');
   await page.getByText('QA Hotel').waitFor();
   await page.locator('[data-tab="settings"]').click();
   const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'导出 JSON 备份'}).click()]);
-  const fs=require('node:fs');const tmp=await download.path();
+  const tmp=await download.path();
   const json=JSON.parse(fs.readFileSync(tmp,'utf8'));
   assert.equal(json.people,5);assert.equal(json.days[0].hotel,'QA Hotel');
   page.once('dialog',d=>d.accept());
