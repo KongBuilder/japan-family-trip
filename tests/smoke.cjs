@@ -11,7 +11,9 @@ const path=require('node:path');
  try{
   const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  page.on('console',msg=>{if(msg.type()==='error')errors.push('console: '+msg.text())});
   await page.goto(url);
+  assert.equal(await page.title(),'Japan Family Trip OS 9 | Family Travel Control');
   await page.locator('[data-tab="settings"]').click();
   await page.locator('#startDate').fill('2026-11-20');
   await page.locator('#people').fill('5');
@@ -21,7 +23,7 @@ const path=require('node:path');
   assert.equal(await page.locator('#people').inputValue(),'5');
   assert.equal(await page.locator('#startDate').inputValue(),'2026-11-20');
   await page.locator('[data-tab="days"]').click();
-  await page.getByRole('button',{name:'编辑',exact:true}).first().click();
+  await page.locator('button[onclick="editHotel()"]:visible').click();
   await page.locator('[name="hotel"]').fill('QA Hotel');
   await page.locator('#editForm button[type="submit"]').click();
   await page.reload();
